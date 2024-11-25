@@ -1,0 +1,36 @@
+fragment CancelWorkflowPayload on CancelWorkflowPayload {
+  canceled
+}
+
+mutation CancelWorkflow($instanceId: UUID!) {
+  cancelWorkflow(input: { instanceId: $instanceId }) {
+    ...CancelWorkflowPayload
+  }
+}
+fragment StartWorkflowPayload on StartWorkflowPayload {
+  instanceId
+  errors {
+    ... on WorkflowNotFoundError {
+      message
+    }
+  }
+}
+
+mutation StartWorkflow($workflowId: ID!) {
+  startWorkflow(input: { workflowId: $workflowId }) {
+    ...StartWorkflowPayload
+  }
+}
+
+
+# this works even though PageTransitionEventInput also contains a field of type Dictionary
+mutation SubmitTransition($transition: PageTransitionEventInput!) {
+  handleWorkflowTransition(input: { transition: $transition }) {
+    success
+    errors {
+      ... on WorkflowInstanceNotFoundError {
+        message
+      }
+    }
+  }
+}

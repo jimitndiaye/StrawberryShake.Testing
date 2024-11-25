@@ -1,37 +1,3 @@
-fragment CancelWorkflowPayload on CancelWorkflowPayload {
-  canceled
-}
-
-mutation CancelWorkflow($instanceId: UUID!) {
-  cancelWorkflow(input: { instanceId: $instanceId }) {
-    ...CancelWorkflowPayload
-  }
-}
-fragment StartWorkflowPayload on StartWorkflowPayload {
-  instanceId
-  errors {
-    ... on WorkflowNotFoundError {
-      message
-    }
-  }
-}
-
-mutation StartWorkflow($workflowId: ID!) {
-  startWorkflow(input: { workflowId: $workflowId }) {
-    ...StartWorkflowPayload
-  }
-}
-
-mutation SubmitTransition($transition: PageTransitionEventInput!) {
-  handleWorkflowTransition(input: { transition: $transition }) {
-    success
-    errors {
-      ... on WorkflowInstanceNotFoundError {
-        message
-      }
-    }
-  }
-}
 
 fragment VariableDefinition on VariableDefinition {
   name
