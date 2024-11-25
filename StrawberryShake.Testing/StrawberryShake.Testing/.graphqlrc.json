@@ -1,0 +1,22 @@
+{
+  "schema": "schema.graphql",
+  "documents": "**/*.graphql",
+  "extensions": {
+    "strawberryShake": {
+      "name": "GraphQLClient",
+      "namespace": "TK.Dialogs.Portal.Modules.Project.Components.GraphQL",
+      "url": "https://dev.tkdialogs.local:7201/Holidays/graphql",
+      "dependencyInjection": true,
+      "records": {
+        "inputs": true,
+        "entities": true
+      },
+      "transportProfiles": [
+        {
+          "default": "Http",
+          "subscription": "WebSocket"
+        }
+      ]
+    }
+  }
+}

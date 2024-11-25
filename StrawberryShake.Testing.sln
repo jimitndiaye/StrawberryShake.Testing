@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35506.116 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StrawberryShake.Testing", "StrawberryShake.Testing\StrawberryShake.Testing\StrawberryShake.Testing.csproj", "{D42BF537-7C6C-40AB-99EB-C42C18F8CF37}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StrawberryShake.Testing.Client", "StrawberryShake.Testing\StrawberryShake.Testing.Client\StrawberryShake.Testing.Client.csproj", "{24651F4E-1AA3-4719-83D0-DA2520588008}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D42BF537-7C6C-40AB-99EB-C42C18F8CF37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D42BF537-7C6C-40AB-99EB-C42C18F8CF37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D42BF537-7C6C-40AB-99EB-C42C18F8CF37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D42BF537-7C6C-40AB-99EB-C42C18F8CF37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24651F4E-1AA3-4719-83D0-DA2520588008}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24651F4E-1AA3-4719-83D0-DA2520588008}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24651F4E-1AA3-4719-83D0-DA2520588008}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24651F4E-1AA3-4719-83D0-DA2520588008}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

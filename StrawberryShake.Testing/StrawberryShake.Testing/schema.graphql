@@ -1,0 +1,515 @@
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+scalar Dataverse_Money
+
+scalar Dataverse_EntityReference
+
+"The response returned when updating an entity"
+type Dataverse_Update_Entity_Response {
+  "Indicates whether the operation was successfully completed"
+  success: Boolean!
+  "A description of the error that caused the operation to fail"
+  errorMessage: String
+}
+
+"The response returned when creating an entity"
+type Dataverse_Create_Entity_Response {
+  "Indicates whether the operation was successfully completed"
+  success: Boolean!
+  "A description of the error that caused the operation to fail"
+  errorMessage: String
+  "The ID of the newly created entity"
+  id: UUID
+  "The entity reference of the newly created entity"
+  entity_reference: Dataverse_EntityReference
+}
+
+type Dataverse_Queries {
+  error: String!
+}
+
+type Dataverse_Mutations {
+  error: String!
+}
+
+"Lists the connectors available for queries"
+type QueryConnectorList {
+  "Provides access to the org-based database on Microsoft Dataverse in current environment."
+  Dataverse: Dataverse_Queries!
+}
+
+"Lists the connectors available for mutations"
+type MutationConnectorList {
+  "Provides access to the org-based database on Microsoft Dataverse in current environment."
+  Dataverse: Dataverse_Mutations!
+}
+
+type DataConnection implements Node {
+  id: ID!
+  "The name of the connection"
+  name: String!
+  createdAt: DateTime
+  createdBy: String
+  modifiedAt: DateTime
+  modifiedBy: String
+  settings: Dictionary
+  isValid: Boolean!
+}
+
+"Represents a connector"
+type DataConnector implements Node {
+  id: ID!
+  "The name of the connector"
+  name: String!
+  "A short description of the connector"
+  description: String
+  "A friendly name of the connector"
+  displayName: String
+  "The image URL for this connector"
+  imageUrl: String
+  "The individual connections for the connector"
+  Connections: [DataConnection!]!
+  "Designates the specific connection to use for individual environments"
+  environmentMapping: [KeyValuePairOfTargetEnvironmentAndString!]
+}
+
+type Query {
+  "Fetches an object given its ID."
+  node("ID of the object." id: ID!): Node
+  "Lookup nodes by a list of IDs."
+  nodes("The list of node IDs." ids: [ID!]!): [Node]!
+  "The list of connectors currently provided and\/or enabled"
+  connectors: QueryConnectorList!
+  userPreferences: UserPreferences!
+  workflows("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String): WorkflowsConnection
+  workflow("The workflow id" id: ID! "Indicates whether to lock the workflow for edit" forEdit: Boolean! = false): Workflow
+  isWorkflowNameAvailable(workflowName: String!): Boolean!
+  connectorSettings("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String): ConnectorSettingsConnection
+  validateConnectorSettings(request: ValidateConnectionRequestInput!): ValidateConnectionResponse!
+}
+
+type Mutation {
+  "The list of connectors currently provided and\/or enabled"
+  connectors: MutationConnectorList!
+  saveUserPreferences(input: UserPreferencesInput!): UserPreferences!
+  createConnection(input: CreateConnectionInput!): CreateConnectionPayload!
+  updateConnection(input: UpdateConnectionInput!): UpdateConnectionPayload!
+  deleteConnection(input: DeleteConnectionInput!): DeleteConnectionPayload!
+  createWorkflow(input: CreateWorkflowInput!): CreateWorkflowPayload!
+  updateWorkflow(input: UpdateWorkflowInput!): UpdateWorkflowPayload!
+  deleteWorkflow(input: DeleteWorkflowInput!): DeleteWorkflowPayload!
+  "Starts a new instance of the specified workflow and returns the instance ID of the new workflow instance"
+  startWorkflow(input: StartWorkflowInput!): StartWorkflowPayload!
+  cancelWorkflow(input: CancelWorkflowInput!): CancelWorkflowPayload!
+  handleWorkflowTransition(input: HandleWorkflowTransitionInput!): HandleWorkflowTransitionPayload!
+}
+
+type Subscription {
+  "Subscribe to events from the specified workflow instance"
+  onWorkflowEvent("The instance Id. If not provided a new workflow instance will be started. Otherwise the specified instance will be resumed" instanceId: UUID!): WorkflowEvent!
+}
+
+"The node interface is implemented by entities that have a global unique identifier."
+interface Node {
+  id: ID!
+}
+
+scalar UUID
+
+enum ApplyPolicy {
+  BEFORE_RESOLVER
+  AFTER_RESOLVER
+  VALIDATION
+}
+
+scalar Dictionary
+
+type KeyValuePairOfTargetEnvironmentAndString {
+  "The target environment"
+  Environment: TargetEnvironment!
+  "The connection to use"
+  Connection: String!
+}
+
+type PageDisplayEvent implements WorkflowEvent {
+  pageId: String!
+  title: String
+  components: [NormalizedComponentDefinition!]!
+  allowPrevious: Boolean!
+  pageData: Dictionary!
+  workflowId: ID!
+  instanceId: UUID!
+  timestamp: DateTime!
+}
+
+type PageTransitionEvent implements WorkflowEvent {
+  pageId: String!
+  direction: TransitionDirection!
+  pageData: Dictionary!
+  transitionData: CustomTransitionData
+  workflowId: ID!
+  instanceId: UUID!
+  timestamp: DateTime!
+}
+
+type WorkflowCanceledEvent implements WorkflowEvent {
+  workflowId: ID!
+  instanceId: UUID!
+  timestamp: DateTime!
+}
+
+type WorkflowAbortedEvent implements WorkflowEvent {
+  reason: String!
+  workflowId: ID!
+  instanceId: UUID!
+  timestamp: DateTime!
+}
+
+type WorkflowCompletedEvent implements WorkflowEvent {
+  workflowId: ID!
+  instanceId: UUID!
+  timestamp: DateTime!
+}
+
+type NormalizedInputComponentDefinition implements NormalizedComponentDefinition {
+  variable: VariableDefinition!
+  id: String!
+  type: String!
+  parentId: String
+  inputs: Dictionary!
+  children: [String!]!
+}
+
+type Workflow implements Node & WorkflowSummary {
+  xaml: String!
+  assemblies: [WorkflowAssembly!]!
+  requiresUserInput: Boolean!
+  isSingleton: Boolean!
+  isEditable: Boolean!
+  id: ID!
+  name: String!
+  type: WorkflowType!
+  lastModified: DateTime
+  lastModifiedBy: String
+  published: Boolean!
+}
+
+enum WorkflowType {
+  DIALOG
+  EVENT
+  SCHEDULE
+  MANUAL
+}
+
+type WorkflowAssembly {
+  assemblyName: String!
+  assemblyBytes: ByteArray!
+}
+
+"The `DateTime` scalar represents an ISO-8601 compliant date time type."
+scalar DateTime
+
+enum TargetEnvironment {
+  DEVELOPMENT
+  TEST
+  PRODUCTION
+}
+
+"A connection to a list of items."
+type WorkflowsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [WorkflowsEdge!]
+  "A flattened list of the nodes."
+  nodes: [WorkflowSummary!]
+}
+
+"A connection to a list of items."
+type ConnectorSettingsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [ConnectorSettingsEdge!]
+  "A flattened list of the nodes."
+  nodes: [DataConnector]
+}
+
+type ConnectorDoesNotExistError implements Error {
+  message: String!
+}
+
+type ConnectionNameInvalidError implements Error {
+  message: String!
+}
+
+type ConnectionAlreadyExistsError implements Error {
+  message: String!
+}
+
+type ConnectionDoesNotExistError implements Error {
+  message: String!
+}
+
+type WorkflowNameDuplicateError implements Error {
+  message: String!
+}
+
+type WorkflowNameInvalidError implements Error {
+  message: String!
+}
+
+type WorkflowNotFoundError implements Error {
+  message: String!
+}
+
+type WorkflowLockedForEditError implements Error {
+  message: String!
+}
+
+type WorkflowInstanceNotFoundError implements Error {
+  message: String!
+}
+
+scalar ByteArray
+
+"Information about pagination in a connection."
+type PageInfo {
+  "Indicates whether more edges exist following the set defined by the clients arguments."
+  hasNextPage: Boolean!
+  "Indicates whether more edges exist prior the set defined by the clients arguments."
+  hasPreviousPage: Boolean!
+  "When paginating backwards, the cursor to continue."
+  startCursor: String
+  "When paginating forwards, the cursor to continue."
+  endCursor: String
+}
+
+interface WorkflowSummary {
+  id: ID!
+  name: String!
+  type: WorkflowType!
+  lastModified: DateTime
+  lastModifiedBy: String
+  published: Boolean!
+}
+
+"An edge in a connection."
+type WorkflowsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: WorkflowSummary!
+}
+
+"An edge in a connection."
+type ConnectorSettingsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: DataConnector
+}
+
+interface Error {
+  message: String!
+}
+
+interface WorkflowEvent {
+  workflowId: ID!
+  instanceId: UUID!
+  timestamp: DateTime!
+}
+
+type VariableDefinition {
+  name: String!
+  typeName: String!
+  defaultExpression: String
+}
+
+type CustomTransitionData {
+  type: String!
+  properties: Dictionary!
+}
+
+enum TransitionDirection {
+  NEXT
+  PREVIOUS
+  CUSTOM
+}
+
+interface NormalizedComponentDefinition {
+  id: String!
+  type: String!
+  parentId: String
+  inputs: Dictionary!
+  children: [String!]!
+}
+
+input PageTransitionEventInput {
+  pageId: String!
+  direction: TransitionDirection! = NEXT
+  pageData: Dictionary!
+  transitionData: CustomTransitionDataInput
+  workflowId: ID!
+  instanceId: UUID!
+  timestamp: DateTime!
+}
+
+input WorkflowAssemblyInput {
+  assemblyName: String!
+  assemblyBytes: ByteArray!
+}
+
+input UpdateConnectionRequestInput {
+  connectorName: String!
+  connectionName: String!
+  connectionSettings: Dictionary!
+}
+
+input CreateConnectionRequestInput {
+  connectorName: String!
+  connectionName: String!
+  connectionSettings: Dictionary!
+}
+
+input UserPreferencesInput {
+  rightToLeft: Boolean!
+  darkTheme: Boolean!
+  lastUpdated: DateTime
+}
+
+input ValidateConnectionRequestInput {
+  connectorName: String!
+  connectionName: String!
+  connectionSettings: Dictionary!
+  isNew: Boolean!
+}
+
+type ValidateConnectionResponse {
+  succeeded: Boolean!
+  errors: [ValidationError!]
+}
+
+type UserPreferences {
+  rightToLeft: Boolean!
+  darkTheme: Boolean!
+  lastUpdated: DateTime
+}
+
+type ValidationError {
+  errorMessage: String!
+  propertyName: String
+}
+
+input CustomTransitionDataInput {
+  type: String!
+  properties: Dictionary!
+}
+
+input CreateConnectionInput {
+  request: CreateConnectionRequestInput!
+}
+
+union CreateConnectionError = ConnectorDoesNotExistError | ConnectionNameInvalidError | ConnectionAlreadyExistsError
+
+type CreateConnectionPayload {
+  connection: DataConnection
+  errors: [CreateConnectionError!]
+}
+
+input UpdateConnectionInput {
+  request: UpdateConnectionRequestInput!
+}
+
+union UpdateConnectionError = ConnectorDoesNotExistError | ConnectionDoesNotExistError
+
+type UpdateConnectionPayload {
+  connection: DataConnection
+  errors: [UpdateConnectionError!]
+}
+
+input DeleteConnectionInput {
+  connectorName: String!
+  connectionName: String!
+}
+
+union DeleteConnectionError = ConnectorDoesNotExistError
+
+type DeleteConnectionPayload {
+  deleted: Boolean
+  errors: [DeleteConnectionError!]
+}
+
+input CreateWorkflowInput {
+  name: String!
+  type: WorkflowType!
+  xaml: String!
+  assemblies: [WorkflowAssemblyInput!]!
+  requiresUserInput: Boolean! = false
+  isSingleton: Boolean! = false
+}
+
+union CreateWorkflowError = WorkflowNameDuplicateError | WorkflowNameInvalidError
+
+type CreateWorkflowPayload {
+  workflow: Workflow
+  errors: [CreateWorkflowError!]
+}
+
+input UpdateWorkflowInput {
+  id: ID!
+  xaml: String!
+  assemblies: [WorkflowAssemblyInput!]!
+}
+
+union UpdateWorkflowError = WorkflowNotFoundError | WorkflowLockedForEditError
+
+type UpdateWorkflowPayload {
+  workflow: Workflow
+  errors: [UpdateWorkflowError!]
+}
+
+input DeleteWorkflowInput {
+  workflowId: ID!
+}
+
+union DeleteWorkflowError = WorkflowLockedForEditError
+
+type DeleteWorkflowPayload {
+  deleted: Boolean
+  errors: [DeleteWorkflowError!]
+}
+
+input StartWorkflowInput {
+  workflowId: ID!
+}
+
+union StartWorkflowError = WorkflowNotFoundError
+
+type StartWorkflowPayload {
+  instanceId: UUID
+  errors: [StartWorkflowError!]
+}
+
+input CancelWorkflowInput {
+  instanceId: UUID!
+}
+
+type CancelWorkflowPayload {
+  canceled: Boolean
+}
+
+input HandleWorkflowTransitionInput {
+  transition: PageTransitionEventInput!
+}
+
+union HandleWorkflowTransitionError = WorkflowInstanceNotFoundError
+
+type HandleWorkflowTransitionPayload {
+  success: Boolean
+  errors: [HandleWorkflowTransitionError!]
+}

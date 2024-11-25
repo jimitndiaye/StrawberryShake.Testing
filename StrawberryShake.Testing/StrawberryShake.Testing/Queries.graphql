@@ -1,0 +1,90 @@
+fragment CancelWorkflowPayload on CancelWorkflowPayload {
+  canceled
+}
+
+mutation CancelWorkflow($instanceId: UUID!) {
+  cancelWorkflow(input: { instanceId: $instanceId }) {
+    ...CancelWorkflowPayload
+  }
+}
+fragment StartWorkflowPayload on StartWorkflowPayload {
+  instanceId
+  errors {
+    ... on WorkflowNotFoundError {
+      message
+    }
+  }
+}
+
+mutation StartWorkflow($workflowId: ID!) {
+  startWorkflow(input: { workflowId: $workflowId }) {
+    ...StartWorkflowPayload
+  }
+}
+
+mutation SubmitTransition($transition: PageTransitionEventInput!) {
+  handleWorkflowTransition(input: { transition: $transition }) {
+    success
+    errors {
+      ... on WorkflowInstanceNotFoundError {
+        message
+      }
+    }
+  }
+}
+
+fragment VariableDefinition on VariableDefinition {
+  name
+  typeName
+  defaultExpression
+}
+
+fragment ComponentDefinition on NormalizedComponentDefinition {
+  id
+  type
+  parentId
+  inputs # comment out to allow compilation
+  children
+  ... on NormalizedInputComponentDefinition {
+    variable {
+      ...VariableDefinition
+    }
+  }
+}
+
+fragment WorkflowEventProperties on WorkflowEvent {
+  workflowId
+  instanceId
+  timestamp
+}
+
+fragment WorkflowEvent on WorkflowEvent {
+  ...WorkflowEventProperties
+  ... on PageDisplayEvent {
+    pageId
+    title
+    allowPrevious
+    pageData # comment out to allow compilation
+    components {
+      ...ComponentDefinition
+    }
+  }
+  ... on PageTransitionEvent {
+    pageId
+    direction
+    pageData
+    transitionData {
+      type
+      properties # comment out to allow compilation
+    }
+  }
+  ... on WorkflowAbortedEvent {
+    reason
+  }
+}
+
+subscription SubscribeToWorkflowEvents($instanceId: UUID!) {
+  onWorkflowEvent(instanceId: $instanceId) {
+    ...WorkflowEvent
+  }
+}
